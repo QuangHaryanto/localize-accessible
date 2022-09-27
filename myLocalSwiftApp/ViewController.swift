@@ -8,6 +8,15 @@
 import UIKit
 import Combine
 
+
+/**
+ Typing NSLocalizedString("key", comment: "comment") every time is tedious and make your code look heavier and harder than it needs to be. To make your life easier you can implement a custom post-fix operator:
+ */
+postfix operator ~
+postfix func ~ (string: String) -> String {
+    return NSLocalizedString(string, comment: "")
+}
+
 struct Quote: Codable {
     let id, author, en: String
 }
@@ -20,9 +29,9 @@ class NetworkService{
         let decoder = JSONDecoder()
         
         if let jsonItems = try? decoder.decode([T].self, from: json) {
-            for item in jsonItems{
-                //print(item)
-            }
+//            for item in jsonItems{
+//                //print(item)
+//            }
             return jsonItems
         }
         return []
@@ -80,32 +89,18 @@ final class ExampleNetworkService {
         dataTask?.resume()
     }
     
-    
-}
-
-enum APIError: Error, LocalizedError {
-    case invalidServerResponse
-    case unknown
-    
-    var errorDescription: String? {
-        switch self {
-        case .unknown:
-            return "Unknown error"
-        case .invalidServerResponse:
-            return "Invalid Server Response"
+    func parse<T: Decodable>(model: T.Type, json: Data) -> [T]{
+        let decoder = JSONDecoder()
+        
+        if let jsonItems = try? decoder.decode([T].self, from: json) {
+//            for item in jsonItems{
+//                //print(item)
+//            }
+            return jsonItems
         }
+        return []
     }
-}
-
-enum ParseError: Error, LocalizedError {
-    case parserError(reason: String)
     
-    var errorDescription: String? {
-        switch self {
-        case .parserError(let reason):
-            return reason
-        }
-    }
 }
 
 class ViewController: UIViewController {
@@ -118,15 +113,14 @@ class ViewController: UIViewController {
     let stackView   = UIStackView()
     var myTable = UITableView()
     
-    let url = URL(string: "https://programming-quotes-api.herokuapp.com/Quotes?count=5")!
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         print(#function)
         // Do any additional setup after loading the view.
         //        setupManualNavigationBar()
         navigationController?.navigationBar.prefersLargeTitles = true;
-        self.navigationItem.title = NSLocalizedString("My Title", comment: "This is a Title")
+        //        let title:String = "My title"
+        self.navigationItem.title = "My Title"~ //NSLocalizedString("My Title", comment: "This is a Title")
         
         loadData()
     }
@@ -139,7 +133,7 @@ class ViewController: UIViewController {
     
     
     func loadData(){
-        xnetworkService.request(url: "https://programming-quotes-api.herokuapp.com/Quotes?count=5", query: nil, httpMethod: "GET") { [self] response in
+        xnetworkService.request(url: "https://programming-quotes-api.herokuapp.com/Quotes?count=8", query: nil, httpMethod: "GET") { [self] response in
             switch response {
             case .success(let data):
                 DispatchQueue.main.async {
@@ -149,8 +143,6 @@ class ViewController: UIViewController {
             case .failure(let error):
                 print(error.localizedDescription)
             }
-            
-            //
         }
     }
     
@@ -182,7 +174,7 @@ class ViewController: UIViewController {
     
     func reLayout(){
         // autolayout constraint
-        var layoutGuide: UILayoutGuide = view.layoutMarginsGuide
+        let layoutGuide: UILayoutGuide = view.layoutMarginsGuide
         
         NSLayoutConstraint.activate([
             stackView.topAnchor.constraint(equalTo: layoutGuide.topAnchor),
@@ -199,7 +191,7 @@ class ViewController: UIViewController {
         let myTable = UITableView()
         myTable.dataSource = self
         myTable.delegate = self
-        myTable.register(MyCustomCell.self, forCellReuseIdentifier: "MyCell")
+        myTable.register(MyCustomCell.self, forCellReuseIdentifier: "MyCell1")
         return myTable
     }
     
@@ -224,7 +216,7 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate{
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        if let cell = tableView.dequeueReusableCell(withIdentifier: "MyCell") as? MyCustomCell{
+        if let cell = tableView.dequeueReusableCell(withIdentifier: "MyCell1") as? MyCustomCell{
             cell.textLabel?.numberOfLines = 0
             cell.textLabel?.text = items[indexPath.row].en
             cell.detailTextLabel?.numberOfLines = 0
@@ -235,11 +227,8 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate{
         }
         return UITableViewCell()
     }
-    
-//    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-//        return 100
-//    }
-    func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+
+    private func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
         return UITableView.automaticDimension
     }
 }
