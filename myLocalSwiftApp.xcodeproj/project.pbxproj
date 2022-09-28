@@ -40,6 +40,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		1B74A93128E4BF24009D8CF4 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/Main.strings; sourceTree = "<group>"; };
+		1B74A93228E4BF24009D8CF4 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/LaunchScreen.strings; sourceTree = "<group>"; };
+		1B74A93328E4BF24009D8CF4 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = ar; path = ar.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
+		1B74A93428E4BF24009D8CF4 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1BDE442428DA9E76009B3441 /* myLocalSwiftApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = myLocalSwiftApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1BDE442728DA9E76009B3441 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		1BDE442928DA9E76009B3441 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -230,6 +234,7 @@
 				en,
 				Base,
 				id,
+				ar,
 			);
 			mainGroup = 1BDE441B28DA9E75009B3441;
 			productRefGroup = 1BDE442528DA9E76009B3441 /* Products */;
@@ -323,6 +328,7 @@
 			children = (
 				1BDE442E28DA9E76009B3441 /* Base */,
 				1BDE44A128DAE4F9009B3441 /* en */,
+				1B74A93128E4BF24009D8CF4 /* ar */,
 			);
 			name = Main.storyboard;
 			sourceTree = "<group>";
@@ -332,6 +338,7 @@
 			children = (
 				1BDE443628DA9E77009B3441 /* Base */,
 				1BDE449F28DAE4E4009B3441 /* en */,
+				1B74A93228E4BF24009D8CF4 /* ar */,
 			);
 			name = LaunchScreen.storyboard;
 			sourceTree = "<group>";
@@ -341,6 +348,7 @@
 			children = (
 				1BDE44A528DAF894009B3441 /* id */,
 				1BDE44AA28DAF8FC009B3441 /* en */,
+				1B74A93428E4BF24009D8CF4 /* ar */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -350,6 +358,7 @@
 			children = (
 				1BDE44A828DAF8EF009B3441 /* en */,
 				1BDE44AB28DAF98A009B3441 /* id */,
+				1B74A93328E4BF24009D8CF4 /* ar */,
 			);
 			name = Localizable.stringsdict;
 			sourceTree = "<group>";

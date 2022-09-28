@@ -23,20 +23,17 @@ struct Quote: Codable {
 
 typealias Quotes = [Quote]
 
-class NetworkService{
-    
-    func parse<T: Decodable>(model: T.Type, json: Data) -> [T]{
-        let decoder = JSONDecoder()
-        
-        if let jsonItems = try? decoder.decode([T].self, from: json) {
-//            for item in jsonItems{
-//                //print(item)
-//            }
-            return jsonItems
-        }
-        return []
-    }
-}
+//class NetworkService{
+//    
+//    func parse<T: Decodable>(model: T.Type, json: Data) -> [T]{
+//        let decoder = JSONDecoder()
+//        
+//        if let jsonItems = try? decoder.decode([T].self, from: json) {
+//            return jsonItems
+//        }
+//        return []
+//    }
+//}
 
 final class ExampleNetworkService {
     
@@ -93,9 +90,6 @@ final class ExampleNetworkService {
         let decoder = JSONDecoder()
         
         if let jsonItems = try? decoder.decode([T].self, from: json) {
-//            for item in jsonItems{
-//                //print(item)
-//            }
             return jsonItems
         }
         return []
@@ -106,38 +100,35 @@ final class ExampleNetworkService {
 class ViewController: UIViewController {
     
     var items: [Quote] = [Quote(id: "mari", author: "kita", en: "coba"), Quote(id: "mari", author: "kita", en: "coba"), Quote(id: "mari", author: "kita", en: "coba")]
+    var allItems: [Quote] = []
     
-    var networkService = NetworkService()
     var xnetworkService = ExampleNetworkService(sessionConfiguration: URLSessionConfiguration.default)
     
-    let stackView   = UIStackView()
+    var stackView   = UIStackView()
     var myTable = UITableView()
+    
+    lazy var searchBar:UISearchBar = UISearchBar()
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        print(#function)
         // Do any additional setup after loading the view.
         //        setupManualNavigationBar()
         navigationController?.navigationBar.prefersLargeTitles = true;
         //        let title:String = "My title"
         self.navigationItem.title = "My Title"~ //NSLocalizedString("My Title", comment: "This is a Title")
         
+        setupSearchBar()
+        setupView()
         loadData()
     }
     
-    override func loadView() {
-        super.loadView()
-        print(#function)
-        setupView()
-    }
-    
-    
     func loadData(){
-        xnetworkService.request(url: "https://programming-quotes-api.herokuapp.com/Quotes?count=8", query: nil, httpMethod: "GET") { [self] response in
+        xnetworkService.request(url: "https://programming-quotes-api.herokuapp.com/Quotes?count=16", query: nil, httpMethod: "GET") { [self] response in
             switch response {
             case .success(let data):
-                DispatchQueue.main.async {
-                    self.items = self.networkService.parse(model: Quote.self, json: data)
+                DispatchQueue.main.async { [self] in
+                    self.items = self.xnetworkService.parse(model: Quote.self, json: data)
+                    self.allItems = items
                     self.myTable.reloadData()
                 }
             case .failure(let error):
@@ -146,45 +137,62 @@ class ViewController: UIViewController {
         }
     }
     
+    func setupSearchBar(){
+        searchBar.searchBarStyle = UISearchBar.Style.default
+        searchBar.placeholder = "Search..."~
+        searchBar.sizeToFit()
+        searchBar.isTranslucent = true
+        //        searchBar.backgroundImage = UIImage()
+        searchBar.delegate = self
+        navigationItem.titleView = searchBar
+        navigationItem.preferredSearchBarPlacement = .inline
+    }
+    
+    @objc func endEditing(){
+        searchBar.resignFirstResponder()
+    }
+    
     func setupView(){
+        let tap = UITapGestureRecognizer(target: self, action: #selector(endEditing))
+        tap.cancelsTouchesInView = false
+        view.addGestureRecognizer(tap)
+        
         //Stack View
         stackView.axis  = NSLayoutConstraint.Axis.vertical
-        stackView.distribution  = UIStackView.Distribution.equalCentering
+        stackView.distribution  = UIStackView.Distribution.fill
         stackView.alignment = UIStackView.Alignment.center
         stackView.spacing   = 8.0
         stackView.translatesAutoresizingMaskIntoConstraints = false
         self.view.addSubview(stackView)
         
         myTable.translatesAutoresizingMaskIntoConstraints = false
+        myTable.keyboardDismissMode = .onDrag
         myTable = setupTable()
         stackView.addArrangedSubview(myTable)
-        myTable.leadingAnchor.constraint(equalTo: myTable.superview!.leadingAnchor).isActive = true
-        myTable.heightAnchor.constraint(equalTo: myTable.superview!.heightAnchor, constant:-44).isActive = true
-        myTable.backgroundColor = .systemCyan
-        
-        
+        myTable.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
+
         let myButton = setupButton()
         myButton.translatesAutoresizingMaskIntoConstraints = false
         stackView.addArrangedSubview(myButton)
-        myButton.leadingAnchor.constraint(equalTo: myButton.superview!.leadingAnchor).isActive = true
+        myButton.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
         
-        reLayout()
         
-    }
-    
-    func reLayout(){
+        let myButton1 = setupButton1()
+        myButton1.translatesAutoresizingMaskIntoConstraints = false
+        stackView.addArrangedSubview(myButton1)
+        myButton1.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
+        
         // autolayout constraint
         let layoutGuide: UILayoutGuide = view.layoutMarginsGuide
         
         NSLayoutConstraint.activate([
             stackView.topAnchor.constraint(equalTo: layoutGuide.topAnchor),
-            //            stackView.leftAnchor.constraint(equalTo: layoutGuide.leftAnchor),
-            //            stackView.rightAnchor.constraint(equalTo: layoutGuide.rightAnchor),
             stackView.bottomAnchor.constraint(equalTo: layoutGuide.bottomAnchor),
             stackView.leadingAnchor.constraint(equalTo: layoutGuide.leadingAnchor),
             stackView.trailingAnchor.constraint(equalTo: layoutGuide.trailingAnchor)
             
         ])
+        
     }
     
     func setupTable()->UITableView{
@@ -192,22 +200,115 @@ class ViewController: UIViewController {
         myTable.dataSource = self
         myTable.delegate = self
         myTable.register(MyCustomCell.self, forCellReuseIdentifier: "MyCell1")
+        myTable.layer.cornerRadius = 10
         return myTable
     }
     
     func setupButton()->UIButton{
-        let myButton = UIButton()
+        let myButton = myCustomButton()
         myButton.setTitle(NSLocalizedString("Tap Me", comment: "A Button Tap"), for: .normal)
-        myButton.setTitleColor(.white, for: .normal)
-        myButton.backgroundColor = .systemBlue
-        myButton.layer.cornerRadius = 5;
+//        myButton.titleLabel?.font = UIFont.preferredFont(forTextStyle: .body)
+//        myButton.titleLabel?.adjustsFontForContentSizeCategory = true
+        myButton.configuration = .bordered()
+//        myButton.configuration?.cornerStyle = .capsule
+        myButton.configuration?.image = UIImage(systemName: "list.bullet.circle")?.imageFlippedForRightToLeftLayoutDirection()
         myButton.addTarget(self, action: #selector(didTapMyButton), for: .touchUpInside)
+        return myButton
+    }
+    
+    func setupButton1()->UIButton{
+        let myButton = myCustomButton()
+        myButton.setTitle(NSLocalizedString("Open Folder", comment: "To open folder"), for: .normal)
+//        myButton.titleLabel?.font = UIFont.preferredFont(forTextStyle: .body)
+//        myButton.titleLabel?.adjustsFontForContentSizeCategory = true
+        myButton.configuration = .tinted()
+//        myButton.configuration?.cornerStyle = .capsule
+        myButton.configuration?.image = UIImage(systemName: "folder")?.imageFlippedForRightToLeftLayoutDirection()
+        myButton.addTarget(self, action: #selector(didTapMyButton1), for: .touchUpInside)
         return myButton
     }
     
     @objc func didTapMyButton(){
         present(SecondViewController(), animated: true)
     }
+    
+    @objc func didTapMyButton1(){
+        let sheetViewController = SheetViewController(nibName: nil, bundle: nil)
+        
+        // Present it w/o any adjustments so it uses the default sheet presentation.
+        present(sheetViewController, animated: true, completion: nil)
+    }
+}
+
+class myCustomButton: UIButton{
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+    }
+    
+    override func draw(_ rect: CGRect) {
+        super.draw(rect)
+        setup()
+    }
+    
+    func setup(){
+        if let lbl = titleLabel{
+            lbl.font = UIFont.preferredFont(forTextStyle: .largeTitle)
+            lbl.adjustsFontForContentSizeCategory = true
+        }
+        configuration?.cornerStyle = .dynamic
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
+class myCustomLabel: UILabel{
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func draw(_ rect: CGRect) {
+        super.draw(rect)
+        font = UIFont.preferredFont(forTextStyle: .largeTitle, compatibleWith: .current)
+        adjustsFontForContentSizeCategory = true
+    }
+}
+
+class SheetViewController: UIViewController{
+    
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .white
+        if let presentationController = presentationController as? UISheetPresentationController {
+            presentationController.detents = [
+                .medium(),
+                .large(),
+            ]
+            presentationController.delegate = self
+            presentationController.prefersGrabberVisible = true
+        }
+    }
+}
+
+extension SheetViewController:UISheetPresentationControllerDelegate{
+//    func presentationControllerShouldDismiss(_ presentationController: UIPresentationController) -> Bool {
+//        return false
+//    }
+
 }
 
 extension ViewController: UITableViewDataSource, UITableViewDelegate{
@@ -218,6 +319,8 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate{
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if let cell = tableView.dequeueReusableCell(withIdentifier: "MyCell1") as? MyCustomCell{
             cell.textLabel?.numberOfLines = 0
+//            cell.textLabel?.font = UIFont.preferredFont(forTextStyle: .body)
+//            cell.textLabel?.adjustsFontForContentSizeCategory = true
             cell.textLabel?.text = items[indexPath.row].en
             cell.detailTextLabel?.numberOfLines = 0
             cell.detailTextLabel?.text = items[indexPath.row].author
@@ -227,9 +330,38 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate{
         }
         return UITableViewCell()
     }
-
+    
     private func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
         return UITableView.automaticDimension
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        searchBar.resignFirstResponder()
+    }
+}
+
+extension ViewController: UISearchBarDelegate{
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        var filteredItems:[Quote] = []
+        
+        if !searchText.isEmpty {
+            filteredItems = items.filter({ quote in
+                if quote.en.lowercased().contains(searchText.lowercased()) ||
+                    quote.author.lowercased().contains(searchText.lowercased()) {
+                    return true
+                }
+                return false
+            })
+            
+            items = filteredItems
+        } else {
+            items = allItems
+        }
+        
+        DispatchQueue.main.async {
+            self.myTable.reloadData()
+        }
+        
     }
 }
 
@@ -238,7 +370,7 @@ class MyCustomCell: UITableViewCell{
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: .subtitle, reuseIdentifier: reuseIdentifier)
     }
-    
+
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

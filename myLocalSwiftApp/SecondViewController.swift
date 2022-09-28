@@ -6,18 +6,6 @@
 //
 
 import UIKit
-struct Author: Codable {
-    let edsgerWDijkstra, tonyHoare, jeffHammerbacher, fredBrooks: AuthorDetail
-    let michaelStal: AuthorDetail
-    
-    enum CodingKeys: String, CodingKey {
-        case edsgerWDijkstra
-        case tonyHoare
-        case jeffHammerbacher
-        case fredBrooks
-        case michaelStal
-    }
-}
 
 struct AuthorDetail: Codable {
     let name: String?
@@ -51,10 +39,8 @@ class SecondViewController: UIViewController {
             switch response {
             case .success(let data):
                 DispatchQueue.main.async { [self] in
-                    //                    self.items = self.xnetworkService.parse(model: AuthorDetail.self, json: data)
                     do{
                         guard let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
-                            // appropriate error handling
                             return
                         }
                         items = []
@@ -77,7 +63,7 @@ class SecondViewController: UIViewController {
     func setupView(){
         //Stack View
         stackView.axis  = NSLayoutConstraint.Axis.vertical
-        stackView.distribution  = UIStackView.Distribution.equalCentering
+        stackView.distribution  = UIStackView.Distribution.fill
         stackView.alignment = UIStackView.Alignment.center
         stackView.spacing   = 8.0
         stackView.translatesAutoresizingMaskIntoConstraints = false
@@ -86,14 +72,12 @@ class SecondViewController: UIViewController {
         myTable.translatesAutoresizingMaskIntoConstraints = false
         myTable = setupTable()
         stackView.addArrangedSubview(myTable)
-        myTable.leadingAnchor.constraint(equalTo: myTable.superview!.leadingAnchor).isActive = true
-        myTable.heightAnchor.constraint(equalTo: myTable.superview!.heightAnchor, constant:-44).isActive = true
-        myTable.backgroundColor = .systemCyan
+        myTable.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
         
         let myButton = setupButton()
         myButton.translatesAutoresizingMaskIntoConstraints = false
         stackView.addArrangedSubview(myButton)
-        myButton.leadingAnchor.constraint(equalTo: myButton.superview!.leadingAnchor).isActive = true
+        myButton.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
         
         reLayout()
     }
@@ -103,9 +87,7 @@ class SecondViewController: UIViewController {
         let layoutGuide: UILayoutGuide = view.layoutMarginsGuide
         
         NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: layoutGuide.topAnchor, constant: 44.0),
-            //            stackView.leftAnchor.constraint(equalTo: layoutGuide.leftAnchor),
-            //            stackView.rightAnchor.constraint(equalTo: layoutGuide.rightAnchor),
+            stackView.topAnchor.constraint(equalTo: layoutGuide.topAnchor, constant: 60),
             stackView.bottomAnchor.constraint(equalTo: layoutGuide.bottomAnchor),
             stackView.leadingAnchor.constraint(equalTo: layoutGuide.leadingAnchor),
             stackView.trailingAnchor.constraint(equalTo: layoutGuide.trailingAnchor)
@@ -116,15 +98,19 @@ class SecondViewController: UIViewController {
     func setupButton()->UIButton{
         let myButton = UIButton()
         myButton.setTitle(NSLocalizedString("Tap Me", comment: "A Button Tap"), for: .normal)
-        myButton.setTitleColor(.white, for: .normal)
-        myButton.backgroundColor = .systemBlue
-        myButton.layer.cornerRadius = 5;
+        myButton.titleLabel?.font = UIFont.preferredFont(forTextStyle: .body)
+        myButton.titleLabel?.adjustsFontForContentSizeCategory = true
+        myButton.configuration = .filled()
+        myButton.configuration?.cornerStyle = .capsule
+        let imgConfig = UIImage.SymbolConfiguration.preferringMulticolor()
+        let img = UIImage(systemName: "xmark.circle.fill", withConfiguration: imgConfig)
+        myButton.configuration?.image = img
         myButton.addTarget(self, action: #selector(didTapMyButton), for: .touchUpInside)
         return myButton
     }
     
     @objc func didTapMyButton(){
-        
+        self.dismiss(animated: true)
     }
     
     func setupTable()->UITableView{
@@ -132,13 +118,19 @@ class SecondViewController: UIViewController {
         myTable.dataSource = self
         myTable.delegate = self
         myTable.register(MyCustomCell.self, forCellReuseIdentifier: "MyCell")
+        myTable.layer.cornerRadius = 10
         return myTable
     }
     
     func setupManualNavigationBar(){
-        let navBar = UINavigationBar(frame: CGRect(x: 0, y: 0, width: view.frame.size.width, height: 44))
+        let navBar = UINavigationBar()
         view.addSubview(navBar)
-        
+        navBar.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            navBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            navBar.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ])
+
         let navItem = UINavigationItem(title: NSLocalizedString("Modal Page", comment: "Modal Page"))
         let doneItem = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(didTapDone))
         navItem.rightBarButtonItem = doneItem
