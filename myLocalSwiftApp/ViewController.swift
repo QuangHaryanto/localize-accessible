@@ -19,24 +19,55 @@ postfix func ~ (string: String) -> String {
 
 struct Quote: Codable {
     let id, author, en: String
+    
+    static var initialJSON = """
+[
+  {
+    "id": "5a6ce86e2af929789500e7e4",
+    "author": "Edsger W. Dijkstra",
+    "en": "Computer Science is no more about computers than astronomy is about telescopes."
+  },
+  {
+    "id": "5a6ce86e2af929789500e7d7",
+    "author": "Edsger W. Dijkstra",
+    "en": "Simplicity is prerequisite for reliability."
+  },
+  {
+    "id": "5a6ce86d2af929789500e7ca",
+    "author": "Edsger W. Dijkstra",
+    "en": "The computing scientist’s main challenge is not to get confused by the complexities of his own making."
+  },
+  {
+    "id": "5a6ce86f2af929789500e7f3",
+    "author": "Edsger W. Dijkstra",
+    "en": "If debugging is the process of removing software bugs, then programming must be the process of putting them in."
+  },
+  {
+    "id": "5a6ce86e2af929789500e7d9",
+    "author": "Edsger W. Dijkstra",
+    "en": "A program is like a poem: you cannot write a poem without writing it. Yet people talk about programming as if it were a production process and measure „programmer productivity“ in terms of „number of lines of code produced“. In so doing they book that number on the wrong side of the ledger: We should always refer to „the number of lines of code spent“."
+  },
+  {
+    "id": "5a6ce86f2af929789500e7f8",
+    "author": "Tony Hoare",
+    "en": "There are two ways of constructing a software design: One way is to make it so simple that there are obviously no deficiencies, and the other way is to make it so complicated that there are no obvious deficiencies. The first method is far more difficult."
+  },
+  {
+    "id": "5a6ce86f2af929789500e807",
+    "author": "Jeff Hammerbacher",
+    "en": "The best minds of my generation are thinking about how to make people click ads."
+  },
+  {
+    "id": "5a6ce86f2af929789500e7f9",
+    "author": "Edsger W. Dijkstra",
+    "en": "The tools we use have a profound and devious influence on our thinking habits, and therefore on our thinking abilities."
+  }
+]
+"""
+    
 }
 
-typealias Quotes = [Quote]
-
-//class NetworkService{
-//    
-//    func parse<T: Decodable>(model: T.Type, json: Data) -> [T]{
-//        let decoder = JSONDecoder()
-//        
-//        if let jsonItems = try? decoder.decode([T].self, from: json) {
-//            return jsonItems
-//        }
-//        return []
-//    }
-//}
-
 final class ExampleNetworkService {
-    
     private let urlSession: URLSession
     private var dataTask: URLSessionDataTask?
     
@@ -94,7 +125,13 @@ final class ExampleNetworkService {
         }
         return []
     }
-    
+}
+
+extension String {
+    func toJSON() -> Any? {
+        guard let data = self.data(using: .utf8, allowLossyConversion: false) else { return nil }
+        return try? JSONSerialization.jsonObject(with: data, options: .mutableContainers)
+    }
 }
 
 class ViewController: UIViewController {
@@ -112,17 +149,17 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
-        //        setupManualNavigationBar()
+        view.backgroundColor = .white
         navigationController?.navigationBar.prefersLargeTitles = true;
-        //        let title:String = "My title"
-        self.navigationItem.title = "My Title"~ //NSLocalizedString("My Title", comment: "This is a Title")
         
+        self.navigationItem.title = NSLocalizedString("Quotes", comment: "This is a Title")
         setupSearchBar()
         setupView()
+        
         loadData()
     }
     
-    func loadData(){
+    func loadDataFromNetwork(){
         xnetworkService.request(url: "https://programming-quotes-api.herokuapp.com/Quotes?count=16", query: nil, httpMethod: "GET") { [self] response in
             switch response {
             case .success(let data):
@@ -137,12 +174,24 @@ class ViewController: UIViewController {
         }
     }
     
+    func loadData(){
+        DispatchQueue.main.async { [self] in
+            guard let data = Quote.initialJSON.data(using: .utf8) else { return }
+            
+            self.items = self.xnetworkService.parse(model: Quote.self, json: data)
+            self.allItems = items
+            self.myTable.reloadData()
+            
+        }
+    }
+    
     func setupSearchBar(){
         searchBar.searchBarStyle = UISearchBar.Style.default
         searchBar.placeholder = "Search..."~
         searchBar.sizeToFit()
         searchBar.isTranslucent = true
         //        searchBar.backgroundImage = UIImage()
+        
         searchBar.delegate = self
         navigationItem.titleView = searchBar
         navigationItem.preferredSearchBarPlacement = .inline
@@ -170,7 +219,7 @@ class ViewController: UIViewController {
         myTable = setupTable()
         stackView.addArrangedSubview(myTable)
         myTable.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
-
+        
         let myButton = setupButton()
         myButton.translatesAutoresizingMaskIntoConstraints = false
         stackView.addArrangedSubview(myButton)
@@ -201,16 +250,14 @@ class ViewController: UIViewController {
         myTable.delegate = self
         myTable.register(MyCustomCell.self, forCellReuseIdentifier: "MyCell1")
         myTable.layer.cornerRadius = 10
+        
         return myTable
     }
     
     func setupButton()->UIButton{
         let myButton = myCustomButton()
-        myButton.setTitle(NSLocalizedString("Tap Me", comment: "A Button Tap"), for: .normal)
-//        myButton.titleLabel?.font = UIFont.preferredFont(forTextStyle: .body)
-//        myButton.titleLabel?.adjustsFontForContentSizeCategory = true
+        myButton.setTitle(NSLocalizedString("Authors", comment: "A Button Tap"), for: .normal)
         myButton.configuration = .bordered()
-//        myButton.configuration?.cornerStyle = .capsule
         myButton.configuration?.image = UIImage(systemName: "list.bullet.circle")?.imageFlippedForRightToLeftLayoutDirection()
         myButton.addTarget(self, action: #selector(didTapMyButton), for: .touchUpInside)
         return myButton
@@ -218,11 +265,8 @@ class ViewController: UIViewController {
     
     func setupButton1()->UIButton{
         let myButton = myCustomButton()
-        myButton.setTitle(NSLocalizedString("Open Folder", comment: "To open folder"), for: .normal)
-//        myButton.titleLabel?.font = UIFont.preferredFont(forTextStyle: .body)
-//        myButton.titleLabel?.adjustsFontForContentSizeCategory = true
+        myButton.setTitle(NSLocalizedString("Activity Folder", comment: "To open folder"), for: .normal)
         myButton.configuration = .tinted()
-//        myButton.configuration?.cornerStyle = .capsule
         myButton.configuration?.image = UIImage(systemName: "folder")?.imageFlippedForRightToLeftLayoutDirection()
         myButton.addTarget(self, action: #selector(didTapMyButton1), for: .touchUpInside)
         return myButton
@@ -239,6 +283,13 @@ class ViewController: UIViewController {
         present(sheetViewController, animated: true, completion: nil)
     }
 }
+
+//extension ViewController:UISearchResultsUpdating{
+//    func updateSearchResults(for searchController: UISearchController) {
+//
+//    }
+//
+//}
 
 class myCustomButton: UIButton{
     override init(frame: CGRect) {
@@ -275,40 +326,9 @@ class myCustomLabel: UILabel{
     
     override func draw(_ rect: CGRect) {
         super.draw(rect)
-        font = UIFont.preferredFont(forTextStyle: .largeTitle, compatibleWith: .current)
+        font = UIFont.preferredFont(forTextStyle: .title1, compatibleWith: .current)
         adjustsFontForContentSizeCategory = true
     }
-}
-
-class SheetViewController: UIViewController{
-    
-    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
-        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = .white
-        if let presentationController = presentationController as? UISheetPresentationController {
-            presentationController.detents = [
-                .medium(),
-                .large(),
-            ]
-            presentationController.delegate = self
-            presentationController.prefersGrabberVisible = true
-        }
-    }
-}
-
-extension SheetViewController:UISheetPresentationControllerDelegate{
-//    func presentationControllerShouldDismiss(_ presentationController: UIPresentationController) -> Bool {
-//        return false
-//    }
-
 }
 
 extension ViewController: UITableViewDataSource, UITableViewDelegate{
@@ -319,9 +339,7 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate{
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if let cell = tableView.dequeueReusableCell(withIdentifier: "MyCell1") as? MyCustomCell{
             cell.textLabel?.numberOfLines = 0
-//            cell.textLabel?.font = UIFont.preferredFont(forTextStyle: .body)
-//            cell.textLabel?.adjustsFontForContentSizeCategory = true
-            cell.textLabel?.text = items[indexPath.row].en
+            cell.textLabel?.text = items[indexPath.row].en~
             cell.detailTextLabel?.numberOfLines = 0
             cell.detailTextLabel?.text = items[indexPath.row].author
             cell.contentView.largeContentTitle = items[indexPath.row].id
@@ -370,7 +388,7 @@ class MyCustomCell: UITableViewCell{
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: .subtitle, reuseIdentifier: reuseIdentifier)
     }
-
+    
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

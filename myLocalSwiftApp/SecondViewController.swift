@@ -17,6 +17,106 @@ struct AuthorDetail: Codable {
         case wikiURL
         case quoteCount
     }
+    
+    static var initialJSON = """
+{
+  "Haryanto Salim": {
+    "name": "Haryanto Salim",
+    "wikiUrl": "https://",
+    "quoteCount": 0
+  },
+  "Edsger W. Dijkstra": {
+    "name": "Edsger W. Dijkstra",
+    "wikiUrl": "https://en.wikipedia.org/wiki/Edsger W. Dijkstra",
+    "quoteCount": 23
+  },
+  "Tony Hoare": {
+    "name": "Tony Hoare",
+    "wikiUrl": "https://en.wikipedia.org/wiki/Tony Hoare",
+    "quoteCount": 1
+  },
+  "Jeff Hammerbacher": {
+    "name": "Jeff Hammerbacher",
+    "wikiUrl": "https://en.wikipedia.org/wiki/Jeff Hammerbacher",
+    "quoteCount": 1
+  },
+  "Fred Brooks": {
+    "name": "Fred Brooks",
+    "wikiUrl": "https://en.wikipedia.org/wiki/Fred Brooks",
+    "quoteCount": 35
+  },
+  "Michael Stal": {
+    "name": "Michael Stal",
+    "wikiUrl": "https://en.wikipedia.org/wiki/Michael Stal",
+    "quoteCount": 1
+  },
+  "Jeff Sickel": {
+    "name": "Jeff Sickel",
+    "wikiUrl": "https://en.wikipedia.org/wiki/Jeff Sickel",
+    "quoteCount": 1
+  },
+  "Ken Thompson": {
+    "name": "Ken Thompson",
+    "wikiUrl": "https://en.wikipedia.org/wiki/Ken Thompson",
+    "quoteCount": 8
+  },
+  "Donald Knuth": {
+    "name": "Donald Knuth",
+    "wikiUrl": "https://en.wikipedia.org/wiki/Donald Knuth",
+    "quoteCount": 14
+  },
+  "Grace Hopper": {
+    "name": "Grace Hopper",
+    "wikiUrl": "https://en.wikipedia.org/wiki/Grace Hopper",
+    "quoteCount": 1
+  },
+  "Rick Osborne": {
+    "name": "Rick Osborne",
+    "wikiUrl": "https://en.wikipedia.org/wiki/Rick Osborne",
+    "quoteCount": 1
+  },
+  "John Ousterhout": {
+    "name": "John Ousterhout",
+    "wikiUrl": "https://en.wikipedia.org/wiki/John Ousterhout",
+    "quoteCount": 1
+  },
+  "Poul Anderson": {
+    "name": "Poul Anderson",
+    "wikiUrl": "https://en.wikipedia.org/wiki/Poul Anderson",
+    "quoteCount": 1
+  },
+  "Robert C. Martin": {
+    "name": "Robert C. Martin",
+    "wikiUrl": "https://en.wikipedia.org/wiki/Robert C. Martin",
+    "quoteCount": 4
+  },
+  "David Gelernter": {
+    "name": "David Gelernter",
+    "wikiUrl": "https://en.wikipedia.org/wiki/David Gelernter",
+    "quoteCount": 1
+  },
+  "Edward V. Berard": {
+    "name": "Edward V. Berard",
+    "wikiUrl": "https://en.wikipedia.org/wiki/Edward V. Berard",
+    "quoteCount": 1
+  },
+  "Brian Kernighan": {
+    "name": "Brian Kernighan",
+    "wikiUrl": "https://en.wikipedia.org/wiki/Brian Kernighan",
+    "quoteCount": 3
+  },
+  "Chris Wenham": {
+    "name": "Chris Wenham",
+    "wikiUrl": "https://en.wikipedia.org/wiki/Chris Wenham",
+    "quoteCount": 1
+  },
+  "Haryanto Salim": {
+    "name": "Haryanto Salim",
+    "wikiUrl": "https://",
+    "quoteCount": 0
+  }
+}
+"""
 }
 
 class SecondViewController: UIViewController {
@@ -34,7 +134,7 @@ class SecondViewController: UIViewController {
         loadData()
     }
     
-    func loadData(){
+    func loadDataFromNetwork(){
         xnetworkService.request(url: "https://programming-quotes-api.herokuapp.com/Authors", query: nil, httpMethod: "GET") { [self] response in
             switch response {
             case .success(let data):
@@ -60,6 +160,27 @@ class SecondViewController: UIViewController {
         }
     }
     
+    func loadData(){
+        DispatchQueue.main.async { [self] in
+            guard let data = AuthorDetail.initialJSON.data(using: .utf8) else { return }
+            
+            do{
+                guard let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
+                    return
+                }
+                items = []
+                for item in json{
+                    let data = try JSONSerialization.data(withJSONObject: item.value, options: [])
+                    let author = try JSONDecoder().decode(AuthorDetail.self, from: data)
+                    items.append(author)
+                }
+            }catch{
+                print(error.localizedDescription)
+            }
+            myTable.reloadData()
+        }
+    }
+    
     func setupView(){
         //Stack View
         stackView.axis  = NSLayoutConstraint.Axis.vertical
@@ -79,10 +200,6 @@ class SecondViewController: UIViewController {
         stackView.addArrangedSubview(myButton)
         myButton.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
         
-        reLayout()
-    }
-    
-    func reLayout(){
         // autolayout constraint
         let layoutGuide: UILayoutGuide = view.layoutMarginsGuide
         
@@ -91,13 +208,12 @@ class SecondViewController: UIViewController {
             stackView.bottomAnchor.constraint(equalTo: layoutGuide.bottomAnchor),
             stackView.leadingAnchor.constraint(equalTo: layoutGuide.leadingAnchor),
             stackView.trailingAnchor.constraint(equalTo: layoutGuide.trailingAnchor)
-            
         ])
     }
     
     func setupButton()->UIButton{
         let myButton = UIButton()
-        myButton.setTitle(NSLocalizedString("Tap Me", comment: "A Button Tap"), for: .normal)
+        myButton.setTitle(NSLocalizedString("Close", comment: "A Button Tap"), for: .normal)
         myButton.titleLabel?.font = UIFont.preferredFont(forTextStyle: .body)
         myButton.titleLabel?.adjustsFontForContentSizeCategory = true
         myButton.configuration = .filled()
@@ -131,7 +247,7 @@ class SecondViewController: UIViewController {
             navBar.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
 
-        let navItem = UINavigationItem(title: NSLocalizedString("Modal Page", comment: "Modal Page"))
+        let navItem = UINavigationItem(title: NSLocalizedString("Author List", comment: "Modal Page"))
         let doneItem = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(didTapDone))
         navItem.rightBarButtonItem = doneItem
         
