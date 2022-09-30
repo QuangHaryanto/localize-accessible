@@ -99,6 +99,7 @@ class ActivitySheetViewController: UIViewController {
         activityContentStack.addArrangedSubview(participantStack)
         participantStack.translatesAutoresizingMaskIntoConstraints = false
         participantStack.leadingAnchor.constraint(equalTo: activityContentStack.leadingAnchor).isActive = true
+        participantStack.heightAnchor.constraint(equalToConstant: 50).isActive = true
         
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
@@ -107,19 +108,23 @@ class ActivitySheetViewController: UIViewController {
         let priceStack = keyValueFormatStack("Price", formatter.string(from: NSNumber(floatLiteral: 0.1)) ?? "n/a", .vertical, .fill, .fill)
         activityContentStack.addArrangedSubview(priceStack)
         priceStack.leadingAnchor.constraint(equalTo: activityContentStack.leadingAnchor).isActive = true
+        priceStack.heightAnchor.constraint(equalToConstant: 50).isActive = true
         
         let linkStack = keyValueFormatStack("Link", "http://", .vertical, .fill, .fill)
         activityContentStack.addArrangedSubview(linkStack)
         linkStack.leadingAnchor.constraint(equalTo: activityContentStack.leadingAnchor).isActive = true
+        linkStack.heightAnchor.constraint(equalToConstant: 50).isActive = true
    
         let fillerStack = keyValueFormatStack("", "", .vertical, .fill, .fill)
         activityContentStack.addArrangedSubview(fillerStack)
         fillerStack.leadingAnchor.constraint(equalTo: activityContentStack.leadingAnchor).isActive = true
+        fillerStack.heightAnchor.constraint(equalToConstant: 50).isActive = true
         
         stackView.addArrangedSubview(activitySuggestButton)
         activitySuggestButton.translatesAutoresizingMaskIntoConstraints = false
         activitySuggestButton.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
         activitySuggestButton.bottomAnchor.constraint(equalTo: stackView.bottomAnchor).isActive = true
+        activitySuggestButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
         
         return stackView
     }()
@@ -132,17 +137,11 @@ class ActivitySheetViewController: UIViewController {
         myStack.spacing   = 4.0
         
         let myKeyLabel = UILabel()
-        myKeyLabel.font = UIFont.preferredFont(forTextStyle: .title3, compatibleWith: .none)
-        myKeyLabel.adjustsFontForContentSizeCategory = true
         myKeyLabel.text = key
-        myKeyLabel.numberOfLines = 0
         myStack.addArrangedSubview(myKeyLabel)
 
         let myValueLabel = UILabel()
-        myValueLabel.font = UIFont.preferredFont(forTextStyle: .body, compatibleWith: .none)
-        myValueLabel.adjustsFontForContentSizeCategory = true
         myValueLabel.text = value
-        myValueLabel.numberOfLines = 0
         myStack.addArrangedSubview(myValueLabel)
 
         return myStack
@@ -160,15 +159,15 @@ class ActivitySheetViewController: UIViewController {
     
     lazy var activitySuggestButton: UIButton = {
         let myButton = UIButton()
-        myButton.setTitle(NSLocalizedString("Suggest Me An Activity", comment: "A Suggestion Button Tap"), for: .normal)
-        myButton.configuration = .bordered()
-        myButton.configuration?.cornerStyle = .capsule
-        myButton.configuration?.image = UIImage(systemName: "hourglass.bottomhalf.filled")?.imageFlippedForRightToLeftLayoutDirection()
-        myButton.addTarget(self, action: #selector(didTapMyButton), for: .touchUpInside)
+        myButton.setTitle("Suggest Me An Activity", for: .normal)
+        myButton.backgroundColor = .systemGray4
+        myButton.tintColor = .white
+        myButton.setImage(UIImage(systemName: "hourglass.bottomhalf.filled"), for: .normal)
+        myButton.addTarget(self, action: #selector(didTapActSuggestionButton), for: .touchUpInside)
         return myButton
     }()
     
-    @objc func didTapMyButton(){
+    @objc func didTapActSuggestionButton(){
         print("button tapped")
     }
 }

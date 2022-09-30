@@ -208,14 +208,17 @@ class QuoteViewController: UIViewController {
         stackView.addArrangedSubview(quotesTable)
         quotesTable.translatesAutoresizingMaskIntoConstraints = false
         quotesTable.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
+        quotesTable.heightAnchor.constraint(equalToConstant: 450).isActive = true
         
         stackView.addArrangedSubview(authorsButton)
         authorsButton.translatesAutoresizingMaskIntoConstraints = false
         authorsButton.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
+        authorsButton.heightAnchor.constraint(equalToConstant: 30).isActive = true
         
         stackView.addArrangedSubview(activityButton)
         activityButton.translatesAutoresizingMaskIntoConstraints = false
         activityButton.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
+        authorsButton.heightAnchor.constraint(equalToConstant: 30).isActive = true
         
         return stackView
     }()
@@ -233,28 +236,30 @@ class QuoteViewController: UIViewController {
     lazy var authorsButton: UIButton = {
         let myButton = UIButton()
         myButton.setTitle("Authors", for: .normal)
-        myButton.configuration = .bordered()
-        myButton.configuration?.cornerStyle = .large
-        myButton.configuration?.image = UIImage(systemName: "list.bullet.circle")?.imageFlippedForRightToLeftLayoutDirection()
-        myButton.addTarget(self, action: #selector(didTapMyButton), for: .touchUpInside)
+        myButton.backgroundColor = .systemBlue
+        myButton.tintColor = .white
+        myButton.layer.cornerRadius = 10
+        myButton.setImage(UIImage(systemName: "list.bullet.circle"), for: .normal)
+        myButton.addTarget(self, action: #selector(didTapAuthorsButton), for: .touchUpInside)
         return myButton
     }()
     
     lazy var activityButton: UIButton = {
         let myButton = UIButton()
         myButton.setTitle("Activity Folder", for: .normal)
-        myButton.configuration = .tinted()
-        myButton.configuration?.cornerStyle = .small
-        myButton.configuration?.image = UIImage(systemName: "folder")?.imageFlippedForRightToLeftLayoutDirection()
-        myButton.addTarget(self, action: #selector(didTapMyButton1), for: .touchUpInside)
+        myButton.backgroundColor = .systemBlue
+        myButton.tintColor = .white
+        myButton.layer.cornerRadius = 10
+        myButton.setImage(UIImage(systemName: "folder"), for: .normal)
+        myButton.addTarget(self, action: #selector(didTapActivityButton), for: .touchUpInside)
         return myButton
     }()
     
-    @objc func didTapMyButton(){
+    @objc func didTapAuthorsButton(){
         present(AuthorViewController(), animated: true)
     }
     
-    @objc func didTapMyButton1(){
+    @objc func didTapActivityButton(){
         let sheetViewController = ActivitySheetViewController(nibName: nil, bundle: nil)
         
         // Present it w/o any adjustments so it uses the default sheet presentation.

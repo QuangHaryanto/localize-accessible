@@ -208,10 +208,12 @@ class AuthorViewController: UIViewController {
         stackView.addArrangedSubview(authorsTable)
         authorsTable.translatesAutoresizingMaskIntoConstraints = false
         authorsTable.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
+        closeButton.heightAnchor.constraint(equalToConstant: 400).isActive = true
         
         stackView.addArrangedSubview(closeButton)
         closeButton.translatesAutoresizingMaskIntoConstraints = false
         closeButton.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
+        closeButton.heightAnchor.constraint(equalToConstant: 20).isActive = true
         
         return stackView
     } ()
@@ -219,18 +221,14 @@ class AuthorViewController: UIViewController {
     lazy var closeButton: UIButton = {
         let myButton = UIButton()
         myButton.setTitle("Close", for: .normal)
-        myButton.titleLabel?.font = UIFont.preferredFont(forTextStyle: .body)
-        myButton.titleLabel?.adjustsFontForContentSizeCategory = true
-        myButton.configuration = .filled()
-        myButton.configuration?.cornerStyle = .capsule
-        let imgConfig = UIImage.SymbolConfiguration.preferringMulticolor()
-        let img = UIImage(systemName: "xmark.circle.fill", withConfiguration: imgConfig)
-        myButton.configuration?.image = img
-        myButton.addTarget(self, action: #selector(didTapMyButton), for: .touchUpInside)
+        myButton.backgroundColor = .systemBlue
+        myButton.tintColor = .white
+        myButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
+        myButton.addTarget(self, action: #selector(didTapCloseButton), for: .touchUpInside)
         return myButton
     }()
     
-    @objc func didTapMyButton(){
+    @objc func didTapCloseButton(){
         self.dismiss(animated: true)
     }
     
@@ -265,6 +263,8 @@ extension AuthorViewController: UITableViewDataSource, UITableViewDelegate{
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if let cell = tableView.dequeueReusableCell(withIdentifier: "MyCell") as? MyCustomCell{
+            cell.textLabel?.textColor = .systemGray
+            cell.backgroundColor = .systemYellow
             cell.textLabel?.numberOfLines = 0
             cell.textLabel?.text = "\(items[indexPath.row].name ?? "") has \(items[indexPath.row].quoteCount ?? 0) quote(s)"
             cell.detailTextLabel?.numberOfLines = 0
