@@ -12,12 +12,6 @@ struct AuthorDetail: Codable {
     let wikiURL: String?
     let quoteCount: Int?
     
-    enum CodingKeys: String, CodingKey {
-        case name
-        case wikiURL
-        case quoteCount
-    }
-    
     static var dummyJSON: String = {
         return """
 {
@@ -120,8 +114,8 @@ struct AuthorDetail: Codable {
 """}()
 }
 
-class SecondViewController: UIViewController {
-    var items: [AuthorDetail] = [AuthorDetail(name: "Haryanto", wikiURL: "http://", quoteCount: 8), AuthorDetail(name: "Salim", wikiURL: "http://", quoteCount: 8)]
+class AuthorViewController: UIViewController {
+    var items: [AuthorDetail] = []
     
     var networkService = NetworkService(sessionConfiguration: URLSessionConfiguration.default)
     
@@ -224,7 +218,7 @@ class SecondViewController: UIViewController {
     
     lazy var closeButton: UIButton = {
         let myButton = UIButton()
-        myButton.setTitle(NSLocalizedString("Close", comment: "A Button Tap"), for: .normal)
+        myButton.setTitle("Close", for: .normal)
         myButton.titleLabel?.font = UIFont.preferredFont(forTextStyle: .body)
         myButton.titleLabel?.adjustsFontForContentSizeCategory = true
         myButton.configuration = .filled()
@@ -251,7 +245,7 @@ class SecondViewController: UIViewController {
     
     lazy var myCustomNavigationBar: UIView = {
         let navBar = UINavigationBar()
-        let navItem = UINavigationItem(title: NSLocalizedString("Author List", comment: "Modal Page"))
+        let navItem = UINavigationItem(title: "Author List")
         let doneItem = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(didTapDone))
         navItem.rightBarButtonItem = doneItem
         navBar.setItems([navItem], animated: false)
@@ -262,18 +256,9 @@ class SecondViewController: UIViewController {
     @objc func didTapDone(){
         self.dismiss(animated: true, completion: nil)
     }
-    
-    private func quotesCountUniversal(count: UInt) -> String{
-        
-        let formatString : String = NSLocalizedString("quotes count",
-                                                      comment: "Quotes count string format to be found in Localized.stringsdict")
-        let resultString : String = String.localizedStringWithFormat(formatString, count)
-        return resultString;
-    }
-    
 }
 
-extension SecondViewController: UITableViewDataSource, UITableViewDelegate{
+extension AuthorViewController: UITableViewDataSource, UITableViewDelegate{
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return items.count
     }
@@ -281,7 +266,7 @@ extension SecondViewController: UITableViewDataSource, UITableViewDelegate{
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if let cell = tableView.dequeueReusableCell(withIdentifier: "MyCell") as? MyCustomCell{
             cell.textLabel?.numberOfLines = 0
-            cell.textLabel?.text = "\(items[indexPath.row].name ?? "") \(quotesCountUniversal(count: UInt(items[indexPath.row].quoteCount ?? 0)))"
+            cell.textLabel?.text = "\(items[indexPath.row].name ?? "") has \(items[indexPath.row].quoteCount ?? 0) quote(s)"
             cell.detailTextLabel?.numberOfLines = 0
             cell.detailTextLabel?.text = items[indexPath.row].wikiURL
             

@@ -7,15 +7,6 @@
 
 import UIKit
 
-
-/**
- Typing NSLocalizedString("key", comment: "comment") every time is tedious and make your code look heavier and harder than it needs to be. To make your life easier you can implement a custom post-fix operator:
- */
-postfix operator ~
-postfix func ~ (string: String) -> String {
-    return NSLocalizedString(string, comment: "")
-}
-
 struct Quote: Codable {
     let id, author, en: String
     
@@ -128,9 +119,9 @@ final class NetworkService {
     }
 }
 
-class ViewController: UIViewController {
+class QuoteViewController: UIViewController {
     
-    var items: [Quote] = [Quote(id: "mari", author: "kita", en: "coba"), Quote(id: "mari", author: "kita", en: "coba"), Quote(id: "mari", author: "kita", en: "coba")]
+    var items: [Quote] = []
     var allItems: [Quote] = []
     
     var xnetworkService = NetworkService(sessionConfiguration: URLSessionConfiguration.default)
@@ -150,7 +141,7 @@ class ViewController: UIViewController {
         view.backgroundColor = .systemBackground
         
         navigationController?.navigationBar.prefersLargeTitles = true;
-        navigationItem.title = NSLocalizedString("Quotes", comment: "This is a Title")
+        navigationItem.title = "Quotes"
         
         setupSearchBar()
         
@@ -194,7 +185,7 @@ class ViewController: UIViewController {
     
     func setupSearchBar(){
         searchBar.searchBarStyle = UISearchBar.Style.default
-        searchBar.placeholder = "Search..."~
+        searchBar.placeholder = "Search..."
         searchBar.sizeToFit()
         searchBar.isTranslucent = true
         searchBar.delegate = self
@@ -241,7 +232,7 @@ class ViewController: UIViewController {
     
     lazy var authorsButton: UIButton = {
         let myButton = UIButton()
-        myButton.setTitle(NSLocalizedString("Authors", comment: "A Button Tap"), for: .normal)
+        myButton.setTitle("Authors", for: .normal)
         myButton.configuration = .bordered()
         myButton.configuration?.cornerStyle = .large
         myButton.configuration?.image = UIImage(systemName: "list.bullet.circle")?.imageFlippedForRightToLeftLayoutDirection()
@@ -251,7 +242,7 @@ class ViewController: UIViewController {
     
     lazy var activityButton: UIButton = {
         let myButton = UIButton()
-        myButton.setTitle(NSLocalizedString("Activity Folder", comment: "To open folder"), for: .normal)
+        myButton.setTitle("Activity Folder", for: .normal)
         myButton.configuration = .tinted()
         myButton.configuration?.cornerStyle = .small
         myButton.configuration?.image = UIImage(systemName: "folder")?.imageFlippedForRightToLeftLayoutDirection()
@@ -260,18 +251,18 @@ class ViewController: UIViewController {
     }()
     
     @objc func didTapMyButton(){
-        present(SecondViewController(), animated: true)
+        present(AuthorViewController(), animated: true)
     }
     
     @objc func didTapMyButton1(){
-        let sheetViewController = SheetViewController(nibName: nil, bundle: nil)
+        let sheetViewController = ActivitySheetViewController(nibName: nil, bundle: nil)
         
         // Present it w/o any adjustments so it uses the default sheet presentation.
         present(sheetViewController, animated: true, completion: nil)
     }
 }
 
-extension ViewController: UITableViewDataSource, UITableViewDelegate{
+extension QuoteViewController: UITableViewDataSource, UITableViewDelegate{
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return items.count
     }
@@ -279,7 +270,7 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate{
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if let cell = tableView.dequeueReusableCell(withIdentifier: "MyCell1") as? MyCustomCell{
             cell.textLabel?.numberOfLines = 0
-            cell.textLabel?.text = items[indexPath.row].en~
+            cell.textLabel?.text = items[indexPath.row].en
             cell.detailTextLabel?.numberOfLines = 0
             cell.detailTextLabel?.text = items[indexPath.row].author
             cell.contentView.largeContentTitle = items[indexPath.row].id
@@ -292,13 +283,9 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate{
     private func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
         return UITableView.automaticDimension
     }
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        searchBar.resignFirstResponder()
-    }
 }
 
-extension ViewController: UISearchBarDelegate{
+extension QuoteViewController: UISearchBarDelegate{
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         var filteredItems:[Quote] = []
         
@@ -321,7 +308,6 @@ extension ViewController: UISearchBarDelegate{
         }
     }
 }
-
 
 class MyCustomCell: UITableViewCell{
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
