@@ -17,13 +17,12 @@ struct ActivitySuggestion: Codable {
 
 class SheetViewController: UIViewController {
     
-    var stackView = UIStackView()
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         super.viewDidLoad()
-        view.backgroundColor = .white
+        
+        
         if let presentationController = presentationController as? UISheetPresentationController {
             presentationController.detents = [
                 .medium(),
@@ -42,38 +41,51 @@ class SheetViewController: UIViewController {
     }
     
     func setupView(){
+        view.backgroundColor = .systemBackground
         let tap = UITapGestureRecognizer(target: self, action: #selector(endEditing))
         tap.cancelsTouchesInView = false
         view.addGestureRecognizer(tap)
         
+        view.addSubview(mainStackView)
+        mainStackView.translatesAutoresizingMaskIntoConstraints = false
+        // autolayout constraint
+        let layoutGuide: UILayoutGuide = view.layoutMarginsGuide
+        NSLayoutConstraint.activate([
+            mainStackView.topAnchor.constraint(equalTo: layoutGuide.topAnchor, constant: 50),
+            mainStackView.bottomAnchor.constraint(equalTo: layoutGuide.bottomAnchor),
+            mainStackView.leadingAnchor.constraint(equalTo: layoutGuide.leadingAnchor),
+            mainStackView.trailingAnchor.constraint(equalTo: layoutGuide.trailingAnchor)
+        ])
+    }
+    
+    lazy var mainStackView = {
         //Stack View
+        var stackView = UIStackView()
         stackView.axis  = NSLayoutConstraint.Axis.vertical
         stackView.distribution  = UIStackView.Distribution.fill
         stackView.alignment = UIStackView.Alignment.fill
         stackView.spacing   = 8.0
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        self.view.addSubview(stackView)
         
-        let contentStack = viewStack(.vertical, .fill, .center)
-        let myScrollView = UIScrollView()
-        myScrollView.delegate = self
-        stackView.addArrangedSubview(myScrollView)
+        let activityContentStack = customStackView(.vertical, .fill, .center)
+        let activityContentScrollView = UIScrollView()
+        activityContentScrollView.delegate = self
+        stackView.addArrangedSubview(activityContentScrollView)
         
-        myScrollView.addSubview(contentStack)
+        activityContentScrollView.addSubview(activityContentStack)
 
-        contentStack.translatesAutoresizingMaskIntoConstraints = false
+        activityContentStack.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            contentStack.leadingAnchor.constraint(equalTo: myScrollView.leadingAnchor),
-            contentStack.trailingAnchor.constraint(equalTo: myScrollView.trailingAnchor),
-            contentStack.bottomAnchor.constraint(equalTo: myScrollView.bottomAnchor),
-            contentStack.topAnchor.constraint(equalTo: myScrollView.topAnchor),
-            contentStack.widthAnchor.constraint(equalTo:myScrollView.widthAnchor),
+            activityContentStack.leadingAnchor.constraint(equalTo: activityContentScrollView.leadingAnchor),
+            activityContentStack.trailingAnchor.constraint(equalTo: activityContentScrollView.trailingAnchor),
+            activityContentStack.bottomAnchor.constraint(equalTo: activityContentScrollView.bottomAnchor),
+            activityContentStack.topAnchor.constraint(equalTo: activityContentScrollView.topAnchor),
+            activityContentStack.widthAnchor.constraint(equalTo:activityContentScrollView.widthAnchor),
         ])
         
-        let activityStack = keyValueStack("Activity", "Have a bonfire with your close friends", .vertical, .fill, .fill)
-        contentStack.addArrangedSubview(activityStack)
+        let activityStack = keyValueFormatStack("Activity", "Have a bonfire with your close friends", .vertical, .fill, .fill)
+        activityContentStack.addArrangedSubview(activityStack)
         activityStack.translatesAutoresizingMaskIntoConstraints = false
-        activityStack.leadingAnchor.constraint(equalTo: contentStack.leadingAnchor).isActive = true
+        activityStack.leadingAnchor.constraint(equalTo: activityContentStack.leadingAnchor).isActive = true
         
 //        let activityStack1 = keyValueStack("Activity", "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", .vertical, .fill, .fill)
 //        activityStack1.backgroundColor = .yellow
@@ -87,97 +99,86 @@ class SheetViewController: UIViewController {
 //        activityStack2.translatesAutoresizingMaskIntoConstraints = false
 //        activityStack2.leadingAnchor.constraint(equalTo: contentStack.leadingAnchor).isActive = true
         
-        let typeStack = keyValueStack("Type", "Social", .vertical, .fill, .fill)
-        contentStack.addArrangedSubview(typeStack)
-        typeStack.leadingAnchor.constraint(equalTo: contentStack.leadingAnchor).isActive = true
+        let typeStack = keyValueFormatStack("Type", "Social", .vertical, .fill, .fill)
+        activityContentStack.addArrangedSubview(typeStack)
+        typeStack.leadingAnchor.constraint(equalTo: activityContentStack.leadingAnchor).isActive = true
         
-        let participantStack = keyValueStack("Participants", "4", .vertical, .fill, .fill)
-        contentStack.addArrangedSubview(participantStack)
+        let participantStack = keyValueFormatStack("Participants", "4", .vertical, .fill, .fill)
+        activityContentStack.addArrangedSubview(participantStack)
         participantStack.translatesAutoresizingMaskIntoConstraints = false
-        participantStack.leadingAnchor.constraint(equalTo: contentStack.leadingAnchor).isActive = true
+        participantStack.leadingAnchor.constraint(equalTo: activityContentStack.leadingAnchor).isActive = true
         
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = "USD"
         
-        let priceStack = keyValueStack("Price", formatter.string(from: NSNumber(floatLiteral: 0.1)) ?? "n/a", .vertical, .fill, .fill)
-        contentStack.addArrangedSubview(priceStack)
-        priceStack.leadingAnchor.constraint(equalTo: contentStack.leadingAnchor).isActive = true
+        let priceStack = keyValueFormatStack("Price", formatter.string(from: NSNumber(floatLiteral: 0.1)) ?? "n/a", .vertical, .fill, .fill)
+        activityContentStack.addArrangedSubview(priceStack)
+        priceStack.leadingAnchor.constraint(equalTo: activityContentStack.leadingAnchor).isActive = true
         
-        let linkStack = keyValueStack("Link", "http://", .vertical, .fill, .fill)
-        contentStack.addArrangedSubview(linkStack)
-        linkStack.leadingAnchor.constraint(equalTo: contentStack.leadingAnchor).isActive = true
+        let linkStack = keyValueFormatStack("Link", "http://", .vertical, .fill, .fill)
+        activityContentStack.addArrangedSubview(linkStack)
+        linkStack.leadingAnchor.constraint(equalTo: activityContentStack.leadingAnchor).isActive = true
         
 //        let accessibilityStack = keyValueStack("Accessibility", "0.1", .vertical, .fill, .fill)
 //        contentStack.addArrangedSubview(accessibilityStack)
 //        accessibilityStack.leadingAnchor.constraint(equalTo: contentStack.leadingAnchor).isActive = true
         
-        let fillerStack = keyValueStack("", "", .vertical, .fill, .fill)
-        contentStack.addArrangedSubview(fillerStack)
-        fillerStack.leadingAnchor.constraint(equalTo: contentStack.leadingAnchor).isActive = true
+        let fillerStack = keyValueFormatStack("", "", .vertical, .fill, .fill)
+        activityContentStack.addArrangedSubview(fillerStack)
+        fillerStack.leadingAnchor.constraint(equalTo: activityContentStack.leadingAnchor).isActive = true
         
-        let myButton = setupButton()
-        myButton.translatesAutoresizingMaskIntoConstraints = false
-        stackView.addArrangedSubview(myButton)
-        myButton.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
-        myButton.bottomAnchor.constraint(equalTo: stackView.bottomAnchor).isActive = true
+        stackView.addArrangedSubview(activitySuggestButton)
+        activitySuggestButton.translatesAutoresizingMaskIntoConstraints = false
+        activitySuggestButton.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
+        activitySuggestButton.bottomAnchor.constraint(equalTo: stackView.bottomAnchor).isActive = true
         
-        // autolayout constraint
-        let layoutGuide: UILayoutGuide = view.layoutMarginsGuide
-        
-        NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: layoutGuide.topAnchor, constant: 50),
-            stackView.bottomAnchor.constraint(equalTo: layoutGuide.bottomAnchor),
-            stackView.leadingAnchor.constraint(equalTo: layoutGuide.leadingAnchor),
-            stackView.trailingAnchor.constraint(equalTo: layoutGuide.trailingAnchor)
-        ])
-    }
+        return stackView
+    }()
     
-    func keyValueStack(_ key: String, _ value: String, _ axis: NSLayoutConstraint.Axis, _ distri: UIStackView.Distribution, _ align: UIStackView.Alignment) -> UIStackView{
-        let kvStack = UIStackView()
-        kvStack.axis  = axis
-        kvStack.distribution  = distri
-        kvStack.alignment = align
-        kvStack.spacing   = 4.0
+    func keyValueFormatStack(_ key: String, _ value: String, _ axis: NSLayoutConstraint.Axis, _ distri: UIStackView.Distribution, _ align: UIStackView.Alignment) -> UIStackView{
+        let myStack = UIStackView()
+        myStack.axis  = axis
+        myStack.distribution  = distri
+        myStack.alignment = align
+        myStack.spacing   = 4.0
         
         let myKeyLabel = UILabel()
-        
         myKeyLabel.font = UIFont.preferredFont(forTextStyle: .title3, compatibleWith: .none)
         myKeyLabel.adjustsFontForContentSizeCategory = true
         myKeyLabel.text = key
         myKeyLabel.numberOfLines = 0
-
-        kvStack.addArrangedSubview(myKeyLabel)
+        myStack.addArrangedSubview(myKeyLabel)
 
         let myValueLabel = UILabel()
         myValueLabel.font = UIFont.preferredFont(forTextStyle: .body, compatibleWith: .none)
         myValueLabel.adjustsFontForContentSizeCategory = true
         myValueLabel.text = value
         myValueLabel.numberOfLines = 0
-        kvStack.addArrangedSubview(myValueLabel)
+        myStack.addArrangedSubview(myValueLabel)
 
-        return kvStack
+        return myStack
     }
     
-    func viewStack(_ axis: NSLayoutConstraint.Axis, _ distri: UIStackView.Distribution, _ align: UIStackView.Alignment) -> UIStackView{
-        let kvStack = UIStackView()
-        kvStack.axis  = axis
-        kvStack.distribution  = distri
-        kvStack.alignment = align
-        kvStack.spacing   = 8.0
+    func customStackView(_ axis: NSLayoutConstraint.Axis, _ distri: UIStackView.Distribution, _ align: UIStackView.Alignment) -> UIStackView{
+        let myStack = UIStackView()
+        myStack.axis  = axis
+        myStack.distribution  = distri
+        myStack.alignment = align
+        myStack.spacing   = 8.0
         
-        return kvStack
+        return myStack
     }
     
-    func setupButton()->UIButton{
-        let myButton = myCustomButton()
+    lazy var activitySuggestButton: UIButton = {
+        let myButton = UIButton()
         myButton.setTitle(NSLocalizedString("Suggest Me An Activity", comment: "A Suggestion Button Tap"), for: .normal)
         myButton.configuration = .bordered()
         myButton.configuration?.cornerStyle = .capsule
         myButton.configuration?.image = UIImage(systemName: "hourglass.bottomhalf.filled")?.imageFlippedForRightToLeftLayoutDirection()
         myButton.addTarget(self, action: #selector(didTapMyButton), for: .touchUpInside)
         return myButton
-    }
+    }()
     
     @objc func didTapMyButton(){
         print("button tapped")

@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import Combine
 
 
 /**
@@ -20,7 +19,9 @@ postfix func ~ (string: String) -> String {
 struct Quote: Codable {
     let id, author, en: String
     
-    static var initialJSON = """
+    static var dummyJSON: String = {
+        return
+"""
 [
   {
     "id": "5a6ce86e2af929789500e7e4",
@@ -64,10 +65,10 @@ struct Quote: Codable {
   }
 ]
 """
-    
+    }()
 }
 
-final class ExampleNetworkService {
+final class NetworkService {
     private let urlSession: URLSession
     private var dataTask: URLSessionDataTask?
     
@@ -127,36 +128,43 @@ final class ExampleNetworkService {
     }
 }
 
-extension String {
-    func toJSON() -> Any? {
-        guard let data = self.data(using: .utf8, allowLossyConversion: false) else { return nil }
-        return try? JSONSerialization.jsonObject(with: data, options: .mutableContainers)
-    }
-}
-
 class ViewController: UIViewController {
     
     var items: [Quote] = [Quote(id: "mari", author: "kita", en: "coba"), Quote(id: "mari", author: "kita", en: "coba"), Quote(id: "mari", author: "kita", en: "coba")]
     var allItems: [Quote] = []
     
-    var xnetworkService = ExampleNetworkService(sessionConfiguration: URLSessionConfiguration.default)
-    
-    var stackView   = UIStackView()
-    var myTable = UITableView()
+    var xnetworkService = NetworkService(sessionConfiguration: URLSessionConfiguration.default)
     
     lazy var searchBar:UISearchBar = UISearchBar()
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
-        view.backgroundColor = .white
-        navigationController?.navigationBar.prefersLargeTitles = true;
-        
-        self.navigationItem.title = NSLocalizedString("Quotes", comment: "This is a Title")
-        setupSearchBar()
         setupView()
+        loadDataDummy()
+    }
+    
+    func setupView(){
+        let tap = UITapGestureRecognizer(target: self, action: #selector(endEditing))
+        tap.cancelsTouchesInView = false
+        view.addGestureRecognizer(tap)
+        view.backgroundColor = .systemBackground
         
-        loadData()
+        navigationController?.navigationBar.prefersLargeTitles = true;
+        navigationItem.title = NSLocalizedString("Quotes", comment: "This is a Title")
+        
+        setupSearchBar()
+        
+        //setup stackview
+        self.view.addSubview(mainStackView)
+        mainStackView.translatesAutoresizingMaskIntoConstraints = false
+        // autolayout constraint
+        let layoutGuide: UILayoutGuide = view.layoutMarginsGuide
+        NSLayoutConstraint.activate([
+            mainStackView.topAnchor.constraint(equalTo: layoutGuide.topAnchor),
+            mainStackView.bottomAnchor.constraint(equalTo: layoutGuide.bottomAnchor),
+            mainStackView.leadingAnchor.constraint(equalTo: layoutGuide.leadingAnchor),
+            mainStackView.trailingAnchor.constraint(equalTo: layoutGuide.trailingAnchor)
+        ])
     }
     
     func loadDataFromNetwork(){
@@ -166,7 +174,7 @@ class ViewController: UIViewController {
                 DispatchQueue.main.async { [self] in
                     self.items = self.xnetworkService.parse(model: Quote.self, json: data)
                     self.allItems = items
-                    self.myTable.reloadData()
+                    self.quotesTable.reloadData()
                 }
             case .failure(let error):
                 print(error.localizedDescription)
@@ -174,14 +182,13 @@ class ViewController: UIViewController {
         }
     }
     
-    func loadData(){
+    func loadDataDummy(){
         DispatchQueue.main.async { [self] in
-            guard let data = Quote.initialJSON.data(using: .utf8) else { return }
+            guard let data = Quote.dummyJSON.data(using: .utf8) else { return }
             
             self.items = self.xnetworkService.parse(model: Quote.self, json: data)
             self.allItems = items
-            self.myTable.reloadData()
-            
+            self.quotesTable.reloadData()
         }
     }
     
@@ -190,8 +197,6 @@ class ViewController: UIViewController {
         searchBar.placeholder = "Search..."~
         searchBar.sizeToFit()
         searchBar.isTranslucent = true
-        //        searchBar.backgroundImage = UIImage()
-        
         searchBar.delegate = self
         navigationItem.titleView = searchBar
         navigationItem.preferredSearchBarPlacement = .inline
@@ -201,76 +206,58 @@ class ViewController: UIViewController {
         searchBar.resignFirstResponder()
     }
     
-    func setupView(){
-        let tap = UITapGestureRecognizer(target: self, action: #selector(endEditing))
-        tap.cancelsTouchesInView = false
-        view.addGestureRecognizer(tap)
-        
+    lazy var mainStackView: UIStackView = {
         //Stack View
+        var stackView   = UIStackView()
         stackView.axis  = NSLayoutConstraint.Axis.vertical
         stackView.distribution  = UIStackView.Distribution.fill
         stackView.alignment = UIStackView.Alignment.center
         stackView.spacing   = 8.0
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        self.view.addSubview(stackView)
         
-        myTable.translatesAutoresizingMaskIntoConstraints = false
-        myTable.keyboardDismissMode = .onDrag
-        myTable = setupTable()
-        stackView.addArrangedSubview(myTable)
-        myTable.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
+        stackView.addArrangedSubview(quotesTable)
+        quotesTable.translatesAutoresizingMaskIntoConstraints = false
+        quotesTable.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
         
-        let myButton = setupButton()
-        myButton.translatesAutoresizingMaskIntoConstraints = false
-        stackView.addArrangedSubview(myButton)
-        myButton.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
+        stackView.addArrangedSubview(authorsButton)
+        authorsButton.translatesAutoresizingMaskIntoConstraints = false
+        authorsButton.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
         
+        stackView.addArrangedSubview(activityButton)
+        activityButton.translatesAutoresizingMaskIntoConstraints = false
+        activityButton.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
         
-        let myButton1 = setupButton1()
-        myButton1.translatesAutoresizingMaskIntoConstraints = false
-        stackView.addArrangedSubview(myButton1)
-        myButton1.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
-        
-        // autolayout constraint
-        let layoutGuide: UILayoutGuide = view.layoutMarginsGuide
-        
-        NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: layoutGuide.topAnchor),
-            stackView.bottomAnchor.constraint(equalTo: layoutGuide.bottomAnchor),
-            stackView.leadingAnchor.constraint(equalTo: layoutGuide.leadingAnchor),
-            stackView.trailingAnchor.constraint(equalTo: layoutGuide.trailingAnchor)
-            
-        ])
-        
-    }
+        return stackView
+    }()
     
-    func setupTable()->UITableView{
+    lazy var quotesTable: UITableView = {
         let myTable = UITableView()
         myTable.dataSource = self
         myTable.delegate = self
         myTable.register(MyCustomCell.self, forCellReuseIdentifier: "MyCell1")
         myTable.layer.cornerRadius = 10
-        
+        myTable.keyboardDismissMode = .onDrag
         return myTable
-    }
+    }()
     
-    func setupButton()->UIButton{
-        let myButton = myCustomButton()
+    lazy var authorsButton: UIButton = {
+        let myButton = UIButton()
         myButton.setTitle(NSLocalizedString("Authors", comment: "A Button Tap"), for: .normal)
         myButton.configuration = .bordered()
+        myButton.configuration?.cornerStyle = .large
         myButton.configuration?.image = UIImage(systemName: "list.bullet.circle")?.imageFlippedForRightToLeftLayoutDirection()
         myButton.addTarget(self, action: #selector(didTapMyButton), for: .touchUpInside)
         return myButton
-    }
+    }()
     
-    func setupButton1()->UIButton{
-        let myButton = myCustomButton()
+    lazy var activityButton: UIButton = {
+        let myButton = UIButton()
         myButton.setTitle(NSLocalizedString("Activity Folder", comment: "To open folder"), for: .normal)
         myButton.configuration = .tinted()
+        myButton.configuration?.cornerStyle = .small
         myButton.configuration?.image = UIImage(systemName: "folder")?.imageFlippedForRightToLeftLayoutDirection()
         myButton.addTarget(self, action: #selector(didTapMyButton1), for: .touchUpInside)
         return myButton
-    }
+    }()
     
     @objc func didTapMyButton(){
         present(SecondViewController(), animated: true)
@@ -281,53 +268,6 @@ class ViewController: UIViewController {
         
         // Present it w/o any adjustments so it uses the default sheet presentation.
         present(sheetViewController, animated: true, completion: nil)
-    }
-}
-
-//extension ViewController:UISearchResultsUpdating{
-//    func updateSearchResults(for searchController: UISearchController) {
-//
-//    }
-//
-//}
-
-class myCustomButton: UIButton{
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-    }
-    
-    override func draw(_ rect: CGRect) {
-        super.draw(rect)
-        setup()
-    }
-    
-    func setup(){
-        if let lbl = titleLabel{
-            lbl.font = UIFont.preferredFont(forTextStyle: .largeTitle)
-            lbl.adjustsFontForContentSizeCategory = true
-        }
-        configuration?.cornerStyle = .dynamic
-    }
-    
-    required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        fatalError("init(coder:) has not been implemented")
-    }
-}
-
-class myCustomLabel: UILabel{
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    override func draw(_ rect: CGRect) {
-        super.draw(rect)
-        font = UIFont.preferredFont(forTextStyle: .title1, compatibleWith: .current)
-        adjustsFontForContentSizeCategory = true
     }
 }
 
@@ -377,9 +317,8 @@ extension ViewController: UISearchBarDelegate{
         }
         
         DispatchQueue.main.async {
-            self.myTable.reloadData()
+            self.quotesTable.reloadData()
         }
-        
     }
 }
 

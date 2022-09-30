@@ -18,7 +18,8 @@ struct AuthorDetail: Codable {
         case quoteCount
     }
     
-    static var initialJSON = """
+    static var dummyJSON: String = {
+        return """
 {
   "Haryanto Salim": {
     "name": "Haryanto Salim",
@@ -116,26 +117,47 @@ struct AuthorDetail: Codable {
     "quoteCount": 0
   }
 }
-"""
+"""}()
 }
 
 class SecondViewController: UIViewController {
     var items: [AuthorDetail] = [AuthorDetail(name: "Haryanto", wikiURL: "http://", quoteCount: 8), AuthorDetail(name: "Salim", wikiURL: "http://", quoteCount: 8)]
-    let stackView = UIStackView()
-    var myTable = UITableView()
-    var xnetworkService = ExampleNetworkService(sessionConfiguration: URLSessionConfiguration.default)
+    
+    var networkService = NetworkService(sessionConfiguration: URLSessionConfiguration.default)
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        view.backgroundColor = .white
-        setupManualNavigationBar()
         setupView()
-        loadData()
+        loadDataDummy()
+    }
+    
+    func setupView(){
+        view.backgroundColor = .systemBackground
+        
+        //setup navbar
+        view.addSubview(myCustomNavigationBar)
+        myCustomNavigationBar.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            myCustomNavigationBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            myCustomNavigationBar.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ])
+        
+        //setup stackView
+        view.addSubview(mainStackView)
+        mainStackView.translatesAutoresizingMaskIntoConstraints = false
+        // autolayout constraint
+        let layoutGuide: UILayoutGuide = view.layoutMarginsGuide
+        NSLayoutConstraint.activate([
+            mainStackView.topAnchor.constraint(equalTo: layoutGuide.topAnchor, constant: 60),
+            mainStackView.bottomAnchor.constraint(equalTo: layoutGuide.bottomAnchor),
+            mainStackView.leadingAnchor.constraint(equalTo: layoutGuide.leadingAnchor),
+            mainStackView.trailingAnchor.constraint(equalTo: layoutGuide.trailingAnchor)
+        ])
     }
     
     func loadDataFromNetwork(){
-        xnetworkService.request(url: "https://programming-quotes-api.herokuapp.com/Authors", query: nil, httpMethod: "GET") { [self] response in
+        networkService.request(url: "https://programming-quotes-api.herokuapp.com/Authors", query: nil, httpMethod: "GET") { [self] response in
             switch response {
             case .success(let data):
                 DispatchQueue.main.async { [self] in
@@ -152,7 +174,7 @@ class SecondViewController: UIViewController {
                     }catch{
                         print(error.localizedDescription)
                     }
-                    self.myTable.reloadData()
+                    self.authorsTable.reloadData()
                 }
             case .failure(let error):
                 print(error.localizedDescription)
@@ -160,9 +182,9 @@ class SecondViewController: UIViewController {
         }
     }
     
-    func loadData(){
+    func loadDataDummy(){
         DispatchQueue.main.async { [self] in
-            guard let data = AuthorDetail.initialJSON.data(using: .utf8) else { return }
+            guard let data = AuthorDetail.dummyJSON.data(using: .utf8) else { return }
             
             do{
                 guard let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
@@ -177,41 +199,30 @@ class SecondViewController: UIViewController {
             }catch{
                 print(error.localizedDescription)
             }
-            myTable.reloadData()
+            authorsTable.reloadData()
         }
     }
     
-    func setupView(){
+    lazy var mainStackView: UIStackView = {
         //Stack View
+        let stackView = UIStackView()
         stackView.axis  = NSLayoutConstraint.Axis.vertical
         stackView.distribution  = UIStackView.Distribution.fill
         stackView.alignment = UIStackView.Alignment.center
         stackView.spacing   = 8.0
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        self.view.addSubview(stackView)
         
-        myTable.translatesAutoresizingMaskIntoConstraints = false
-        myTable = setupTable()
-        stackView.addArrangedSubview(myTable)
-        myTable.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
+        stackView.addArrangedSubview(authorsTable)
+        authorsTable.translatesAutoresizingMaskIntoConstraints = false
+        authorsTable.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
         
-        let myButton = setupButton()
-        myButton.translatesAutoresizingMaskIntoConstraints = false
-        stackView.addArrangedSubview(myButton)
-        myButton.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
+        stackView.addArrangedSubview(closeButton)
+        closeButton.translatesAutoresizingMaskIntoConstraints = false
+        closeButton.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
         
-        // autolayout constraint
-        let layoutGuide: UILayoutGuide = view.layoutMarginsGuide
-        
-        NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: layoutGuide.topAnchor, constant: 60),
-            stackView.bottomAnchor.constraint(equalTo: layoutGuide.bottomAnchor),
-            stackView.leadingAnchor.constraint(equalTo: layoutGuide.leadingAnchor),
-            stackView.trailingAnchor.constraint(equalTo: layoutGuide.trailingAnchor)
-        ])
-    }
+        return stackView
+    } ()
     
-    func setupButton()->UIButton{
+    lazy var closeButton: UIButton = {
         let myButton = UIButton()
         myButton.setTitle(NSLocalizedString("Close", comment: "A Button Tap"), for: .normal)
         myButton.titleLabel?.font = UIFont.preferredFont(forTextStyle: .body)
@@ -223,36 +234,30 @@ class SecondViewController: UIViewController {
         myButton.configuration?.image = img
         myButton.addTarget(self, action: #selector(didTapMyButton), for: .touchUpInside)
         return myButton
-    }
+    }()
     
     @objc func didTapMyButton(){
         self.dismiss(animated: true)
     }
     
-    func setupTable()->UITableView{
+    lazy var authorsTable: UITableView = {
         let myTable = UITableView()
         myTable.dataSource = self
         myTable.delegate = self
         myTable.register(MyCustomCell.self, forCellReuseIdentifier: "MyCell")
         myTable.layer.cornerRadius = 10
         return myTable
-    }
+    }()
     
-    func setupManualNavigationBar(){
+    lazy var myCustomNavigationBar: UIView = {
         let navBar = UINavigationBar()
-        view.addSubview(navBar)
-        navBar.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            navBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            navBar.trailingAnchor.constraint(equalTo: view.trailingAnchor)
-        ])
-
         let navItem = UINavigationItem(title: NSLocalizedString("Author List", comment: "Modal Page"))
         let doneItem = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(didTapDone))
         navItem.rightBarButtonItem = doneItem
-        
         navBar.setItems([navItem], animated: false)
-    }
+        
+        return navBar
+    }()
     
     @objc func didTapDone(){
         self.dismiss(animated: true, completion: nil)
